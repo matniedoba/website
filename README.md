@@ -44,6 +44,31 @@ Two details make client-side routing work on Pages: `dist/404.html` is written a
 `index.html` (Pages has no rewrite rule, so a direct hit on a subpage would otherwise 404),
 and `public/.nojekyll` stops Jekyll from dropping files.
 
+## Adding a gallery
+
+Galleries live at `matniedoba.de/gallery/<name>` and are managed purely by dropping files
+into `public/gallery/<name>/`:
+
+```
+public/gallery/myGalleryName/
+  thumbs/            images shown in the grid  ← required
+    01-wide.jpg
+    02-portrait.jpg
+  01-wide.jpg        optional full-size original; clicking the thumb opens it
+  02-portrait.jpg
+  photos.zip         optional — any .zip here becomes the download button
+  meta.json          optional — { "title": "...", "text": "..." }
+```
+
+No code changes and no list to maintain. `vite-plugins/galleries.js` scans the folders at
+build time and exposes them to the page as the `virtual:galleries` module — necessary
+because GitHub Pages cannot list a directory at runtime. The dev server re-scans and
+reloads when you add or remove files.
+
+The URL is matched case-insensitively, so `/gallery/mygalleryname` and
+`/gallery/myGalleryName` both work. Without a `meta.json`, the folder name is used as the
+title and no intro text is shown.
+
 ## Adding a subpage
 
 1. Create a component in `src/pages/`.

@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { copyFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import galleries from './vite-plugins/galleries.js'
 
 // The site is served at the root of the custom domain (matniedoba.de), so assets
 // resolve from "/". Set VITE_BASE=/website/ to build for the bare project-page URL
@@ -23,7 +24,7 @@ function spaFallback() {
 
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? PROD_BASE : '/',
-  plugins: [react(), spaFallback()],
+  plugins: [react(), galleries(), spaFallback()],
   server: {
     // Deliberately off Vite's default 5173, which tends to be occupied by other
     // dev servers. Vite falls forward to the next free port if this one is taken.
