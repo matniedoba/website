@@ -1,0 +1,253 @@
+/* Design tokens taken from the original Buran-theme build of matniedoba.de */
+:root {
+  --accent: #33a3a3;
+  --ink: #333;
+  --heading: #222;
+  --h1: #494949;
+  --muted: #848484;
+  --surface: #f5f5f5;
+  --header-height: 135px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Montserrat, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--ink);
+  background: #fff;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+h1 {
+  font-family: Montserrat, sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 40px;
+  color: var(--h1);
+}
+
+h3 {
+  font-family: Montserrat, sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 28px;
+  color: var(--heading);
+  margin-bottom: 0.25em;
+}
+
+h6 {
+  font-family: Montserrat, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--muted);
+  margin: 0.75em 0 0;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+/* Bootstrap-3 container widths, which the original layout was built on */
+.container {
+  width: 100%;
+  padding: 0 15px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 750px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    width: 970px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    width: 1170px;
+  }
+}
+
+/* ---------- Header ---------- */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  padding: 40px 0;
+  background: var(--surface);
+}
+
+.header-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1em;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.logo {
+  display: block;
+  margin-right: 0.5em;
+  flex: none;
+}
+
+.logo img {
+  display: block;
+}
+
+.slogan {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* Below 50em the original hid the slogan */
+@media (max-width: 799px) {
+  .slogan {
+    display: none;
+  }
+
+  .header-inner {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1200px) {
+  .slogan {
+    transform: translateY(50%);
+    margin-left: 0.5em;
+  }
+}
+
+/* ---------- Content ---------- */
+
+.this-page {
+  margin-top: var(--header-height);
+}
+
+.text-block {
+  max-width: 750px;
+}
+
+.measure {
+  max-width: 650px;
+}
+
+.about-split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 2em;
+  max-width: none;
+}
+
+.about-text {
+  width: 100%;
+  max-width: 750px;
+}
+
+/* The original hid the portrait on narrow screens rather than reflowing it */
+.about-img {
+  display: none;
+}
+
+@media (min-width: 800px) {
+  .about-split {
+    flex-wrap: nowrap;
+  }
+
+  .about-text {
+    width: 60%;
+  }
+
+  .about-img {
+    display: block;
+    width: 20%;
+    /* Half the original 40% column; auto margin keeps it flush right like the
+       floated portrait in the original layout. */
+    margin-left: auto;
+  }
+}
+
+/* Full-bleed grey band */
+.text-block-wide {
+  background: var(--surface);
+  padding: 2em 0;
+  margin: 2em 0;
+}
+
+.text-block-wide p:last-child {
+  margin-bottom: 0;
+}
+
+.travel-img {
+  display: block;
+}
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+  margin-top: 40px;
+  padding: 20px 0 40px;
+}
+
+.footer-menu {
+  list-style: none;
+  margin: 0.25em 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.footer-menu a {
+  display: block;
+  padding: 0.5em 1em;
+  color: #000;
+  font-size: 10px;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.footer-menu a:hover {
+  color: var(--accent);
+}
+
+.footer-menu li:first-child a {
+  padding-left: 0;
+}
