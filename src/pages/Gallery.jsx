@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import galleries from 'virtual:galleries'
 import usePageTitle from '../usePageTitle.js'
@@ -7,9 +8,13 @@ const BASE = import.meta.env.BASE_URL
 // Square images would otherwise have nothing to zoom into on hover.
 const MIN_ZOOM = 1.08
 
+// Falls back to the thumbnail when no full-size original sits next to thumbs/.
+const fullSrc = (photo) => BASE + (photo.full ?? photo.thumb)
+
 export default function Gallery() {
   const { galleryName = '' } = useParams()
   const gallery = galleries[galleryName.toLowerCase()]
+  const [active, setActive] = useState(null)
 
   usePageTitle(gallery ? gallery.title : 'Gallery not found')
 
@@ -28,7 +33,7 @@ export default function Gallery() {
   }
 
   return (
-    <div className="gallery-page">
+    <div className="container gallery-page">
       <div className="gallery-intro">
         <h1>{gallery.title}</h1>
         {gallery.text && <p>{gallery.text}</p>}
@@ -42,7 +47,7 @@ export default function Gallery() {
       {gallery.photos.length > 0 ? (
         <div className="photo-grid">
           {gallery.photos.map((photo) => (
-            <Thumb key={photo.name} photo={photo} />
+            <Thumb key={photo.name} photo={photo} onOpen={() => setActive(photo)} />
           ))}
         </div>
       ) : (
@@ -50,11 +55,13 @@ export default function Gallery() {
           No photos yet — drop images into <code>public/gallery/{gallery.slug}/thumbs/</code>.
         </p>
       )}
+
+      {active && <Lightbox photo={active} onClose={() => setActive(null)} />}
     </div>
   )
 }
 
-function Thumb({ photo }) {
+function Thumb({ photo, onOpen }) {
   // object-fit can't be transitioned, so the tile stays "contain" and we scale
   // by exactly the factor that turns contain into cover: the image's long side
   // divided by its short side. That makes the hover a smooth crop-to-fill.
@@ -65,17 +72,40 @@ function Thumb({ photo }) {
     event.currentTarget.style.setProperty('--zoom', String(Math.max(zoom, MIN_ZOOM)))
   }
 
-  const image = <img src={BASE + photo.thumb} alt="" loading="lazy" onLoad={setZoom} />
-
+  // Kept as a real link so ctrl/middle-click still opens the file directly.
   return (
     <figure className="photo-tile">
-      {photo.full ? (
-        <a href={BASE + photo.full} target="_blank" rel="noopener noreferrer">
-          {image}
-        </a>
-      ) : (
-        image
-      )}
+      <a
+        href={fullSrc(photo)}
+        onClick={(event) => {
+          event.preventDefault()
+          onOpen()
+        }}
+      >
+        <img src={BASE + photo.thumb} alt="" loading="lazy" onLoad={setZoom} />
+      </a>
     </figure>
+  )
+}
+
+function Lightbox({ photo, onClose }) {
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="lightbox" role="dialog" aria-modal="true" onClick={onClose}>
+      <img
+        className="lightbox-image"
+        src={fullSrc(photo)}
+        alt=""
+        // Clicks on the photo itself must not count as "outside".
+        onClick={(event) => event.stopPropagation()}
+      />
+    </div>
   )
 }

@@ -222,15 +222,14 @@ h6 {
 
 /* ---------- Gallery ---------- */
 
-/* 1200px of grid plus the 15px gutters the rest of the site uses */
-.gallery-page {
-  max-width: 1230px;
-  margin: 0 auto;
-  padding: 0 15px;
-}
+/* Width comes from .container, so the gallery lines up with the rest of the site */
 
+/* flow-root keeps the h1's top margin inside the block instead of letting it
+   collapse through, which is what puts the title at the same height as the
+   one on the main page (where it sits inside a flex item). */
 .gallery-intro {
   max-width: 750px;
+  display: flow-root;
 }
 
 .download-button {
@@ -254,13 +253,31 @@ h6 {
   text-decoration: none;
 }
 
-/* Tiles target 400px square but flex with the viewport; auto-fill gives three
-   across at the 1200px maximum and reflows down from there. */
+/* Five columns by default, stepping down with the viewport. Tiles stay square
+   and share the container width evenly. */
 .photo-grid {
   margin-top: 2em;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
+}
+
+@media (max-width: 991px) {
+  .photo-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .photo-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .photo-tile {
@@ -275,6 +292,7 @@ h6 {
   display: block;
   width: 100%;
   height: 100%;
+  cursor: zoom-in;
 }
 
 .photo-tile img {
@@ -300,6 +318,28 @@ h6 {
 .gallery-empty {
   margin-top: 2em;
   color: var(--muted);
+}
+
+/* Above the fixed header, which sits at z-index 999 */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5vmin;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: zoom-out;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  cursor: default;
 }
 
 /* ---------- Footer ---------- */
