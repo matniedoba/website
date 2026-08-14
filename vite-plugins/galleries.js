@@ -1,13 +1,4 @@
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs'
-import { createHash } from 'node:crypto'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { extname, join, resolve, sep } from 'node:path'
 
 const VIRTUAL_ID = 'virtual:galleries'
@@ -23,12 +14,7 @@ const byName = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitiv
  *   public/photography/<slug>/thumbs/*.jpg  -> grid images
  *   public/photography/<slug>/*.jpg         -> optional full-size version of a thumb
  *   public/photography/<slug>/*.zip         -> optional download bundle
- *   public/photography/<slug>/meta.json     -> optional { title, text, password }
- *
- * A `password` in meta.json is written in plain text for convenience but is never
- * published: only its SHA-256 hash reaches the bundle, and the copy of meta.json in
- * dist/ has the field stripped. This gates the page, not the image files, which stay
- * directly fetchable — see the README.
+ *   public/photography/<slug>/meta.json     -> optional { title, text }
  *
  * Paths are emitted without a leading slash; the page prefixes them with
  * import.meta.env.BASE_URL so they survive a change of base path.
@@ -62,13 +48,10 @@ function scanGalleries(galleryRoot) {
 
     const zip = entries.find((f) => extname(f).toLowerCase() === '.zip')
 
-    const password = typeof meta.password === 'string' ? meta.password.trim() : ''
-
     galleries[slug.toLowerCase()] = {
       slug,
       title: meta.title ?? slug,
       text: meta.text ?? '',
-      passwordHash: password ? createHash('sha256').update(password).digest('hex') : null,
       zip: zip ? `photography/${slug}/${zip}` : null,
       photos: thumbs.map((file) => ({
         name: file,
@@ -115,19 +98,6 @@ export default function galleries() {
         const dir = join(outDir, 'photography', slug)
         mkdirSync(dir, { recursive: true })
         copyFileSync(indexHtml, join(dir, 'index.html'))
-
-        // publicDir copies meta.json verbatim, which would publish the plain-text
-        // password. Rewrite the copy in dist/ without it.
-        const metaOut = join(dir, 'meta.json')
-        if (!existsSync(metaOut)) continue
-        try {
-          const meta = JSON.parse(readFileSync(metaOut, 'utf8'))
-          if (!('password' in meta)) continue
-          delete meta.password
-          writeFileSync(metaOut, JSON.stringify(meta, null, 2) + '\n')
-        } catch {
-          // Malformed meta.json was already warned about during the scan.
-        }
       }
     },
 

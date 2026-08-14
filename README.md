@@ -57,7 +57,7 @@ public/photography/myGalleryName/
   01-wide.jpg        optional full-size original; clicking the thumb opens it
   02-portrait.jpg
   photos.zip         optional — any .zip here becomes the download button
-  meta.json          optional — { "title": "...", "text": "...", "password": "..." }
+  meta.json          optional — { "title": "...", "text": "..." }
 ```
 
 No code changes and no list to maintain. `vite-plugins/galleries.js` scans the folders at
@@ -69,27 +69,6 @@ The URL is matched case-insensitively, so `/photography/mygalleryname` and
 `/photography/myGalleryName` both work — but only the exact folder name returns a 200
 status, since GitHub's filesystem is case-sensitive. Share links using the exact name.
 Without a `meta.json`, the folder name is used as the title and no intro text is shown.
-
-### Password protecting a gallery
-
-Add a `password` to the gallery's `meta.json`:
-
-```json
-{ "title": "Natalie und Christian", "password": "some-password" }
-```
-
-Visiting the URL then shows a prompt before anything else renders; no thumbnail is even
-requested until it is unlocked. The unlock lasts for the browser session.
-
-Write it in plain text — it is **not** published. The build hashes it with SHA-256, ships
-only the hash, and strips the field from the copy of `meta.json` in `dist/`. That matters
-because this repo is public.
-
-**It gates the page, not the files.** `/photography/<name>/thumbs/01.jpg` stays directly
-fetchable by anyone who knows the URL, and the hash is brute-forcible for a weak password.
-Treat it as a doormat, not a lock — it stops casual visitors and nothing more. For real
-access control you need a host that can authenticate requests (Cloudflare Access in front
-of the site, for instance); GitHub Pages cannot.
 
 ### Keeping a gallery out of search results
 
