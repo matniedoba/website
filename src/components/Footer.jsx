@@ -1,5 +1,4 @@
 const SOCIAL = [
-  { label: 'Twitter', href: 'https://twitter.com/MatNiedoba' },
   { label: 'Linkedin', href: 'https://www.linkedin.com/in/matniedoba/' },
   { label: 'Email', href: 'mailto:matniedoba@gmail.com' },
 ]
