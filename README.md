@@ -85,6 +85,29 @@ photos. What actually keeps a gallery private:
 - Never link to a gallery from a public page
 - If real privacy is required, static hosting is the wrong tool — that needs auth
 
+## Redirects
+
+`redirects.json` maps a path on the site to an external URL:
+
+```json
+{
+  "natalie-und-christian": "https://www.dropbox.com/scl/fo/…"
+}
+```
+
+The build writes a static page at `dist/<path>/index.html` for each entry, so
+`matniedoba.de/natalie-und-christian` lands on the target. The dev server mirrors this with
+a real 302, so the paths are testable locally.
+
+GitHub Pages cannot issue a true 301, so each page uses a meta refresh plus a script
+fallback and a visible link — it works without JavaScript, and serving a real file means
+Pages answers 200 rather than falling through `404.html` and booting the SPA first. The
+pages are marked `noindex, nofollow`.
+
+Because it is a soft redirect, search engines do not treat it as canonical the way a 301
+would. That is irrelevant for sharing a folder link; a redirect that carries SEO weight
+needs a host with header control.
+
 ## Adding a subpage
 
 1. Create a component in `src/pages/`.
