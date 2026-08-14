@@ -27,13 +27,18 @@ Output lands in `dist/`. `npm run preview` serves that build locally.
 ## Deployment
 
 `.github/workflows/deploy.yml` builds and publishes on every push to `main`.
-Enable it once under **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+It is enabled under **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
-The site is served from `https://matniedoba.github.io/website/`, so `vite.config.js`
-sets `base` to `/website/` for production builds.
+The site is served at the root of **matniedoba.de**, so `vite.config.js` uses `base: '/'`.
+To build for the bare project-page URL instead, set `VITE_BASE=/website/`.
 
-**Using a custom domain** (e.g. `matniedoba.de`): add a `CNAME` file to `public/` with the
-domain, and build with `VITE_BASE=/` so assets resolve from the root.
+The custom domain is configured in **Settings → Pages**, not via a `CNAME` file — when
+publishing from a custom Actions workflow, GitHub ignores any `CNAME` file in the repo.
+
+Images are stored in **Git LFS** (`*.png`, `*.jpg`, `*.jpeg`). The deploy workflow checks
+out with `lfs: true`; without it the build would silently publish pointer stubs instead of
+images. Clone with git-lfs installed, and if images ever appear as ~130-byte files, run
+`git lfs checkout`.
 
 Two details make client-side routing work on Pages: `dist/404.html` is written as a copy of
 `index.html` (Pages has no rewrite rule, so a direct hit on a subpage would otherwise 404),
