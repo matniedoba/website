@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { extname, join, resolve, sep } from 'node:path'
 
 const VIRTUAL_ID = 'virtual:galleries'
@@ -67,12 +67,14 @@ function scanGalleries(galleryRoot) {
 
 export default function galleries() {
   let galleryRoot
+  let outDir
 
   return {
     name: 'galleries',
 
     configResolved(config) {
       galleryRoot = resolve(config.root, 'public/gallery')
+      outDir = resolve(config.root, config.build.outDir)
     },
 
     resolveId(id) {
@@ -82,6 +84,21 @@ export default function galleries() {
     load(id) {
       if (id !== RESOLVED_ID) return null
       return `export default ${JSON.stringify(scanGalleries.call(this, galleryRoot))}`
+    },
+
+    // Each gallery is also a real directory in the published site. Without an
+    // index.html, Pages redirects to add a trailing slash and then answers 404
+    // (serving 404.html, so the SPA still renders, but with a 404 status).
+    // Dropping a copy of index.html into each folder makes them return 200.
+    closeBundle() {
+      const indexHtml = join(outDir, 'index.html')
+      if (!existsSync(indexHtml)) return
+
+      for (const slug of Object.values(scanGalleries(galleryRoot)).map((g) => g.slug)) {
+        const dir = join(outDir, 'gallery', slug)
+        mkdirSync(dir, { recursive: true })
+        copyFileSync(indexHtml, join(dir, 'index.html'))
+      }
     },
 
     configureServer(server) {
