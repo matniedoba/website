@@ -1,4 +1,13 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
+import { createHash } from 'node:crypto'
 import { extname, join, resolve, sep } from 'node:path'
 
 const VIRTUAL_ID = 'virtual:galleries'
@@ -9,12 +18,17 @@ const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif'])
 const byName = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
 
 /**
- * Scans public/gallery/<slug>/ and returns a map keyed by lowercased slug:
+ * Scans public/photography/<slug>/ and returns a map keyed by lowercased slug:
  *
- *   public/gallery/<slug>/thumbs/*.jpg   -> grid images
- *   public/gallery/<slug>/*.jpg          -> optional full-size version of a thumb
- *   public/gallery/<slug>/*.zip          -> optional download bundle
- *   public/gallery/<slug>/meta.json      -> optional { title, text }
+ *   public/photography/<slug>/thumbs/*.jpg  -> grid images
+ *   public/photography/<slug>/*.jpg         -> optional full-size version of a thumb
+ *   public/photography/<slug>/*.zip         -> optional download bundle
+ *   public/photography/<slug>/meta.json     -> optional { title, text, password }
+ *
+ * A `password` in meta.json is written in plain text for convenience but is never
+ * published: only its SHA-256 hash reaches the bundle, and the copy of meta.json in
+ * dist/ has the field stripped. This gates the page, not the image files, which stay
+ * directly fetchable — see the README.
  *
  * Paths are emitted without a leading slash; the page prefixes them with
  * import.meta.env.BASE_URL so they survive a change of base path.
@@ -48,16 +62,19 @@ function scanGalleries(galleryRoot) {
 
     const zip = entries.find((f) => extname(f).toLowerCase() === '.zip')
 
+    const password = typeof meta.password === 'string' ? meta.password.trim() : ''
+
     galleries[slug.toLowerCase()] = {
       slug,
       title: meta.title ?? slug,
       text: meta.text ?? '',
-      zip: zip ? `gallery/${slug}/${zip}` : null,
+      passwordHash: password ? createHash('sha256').update(password).digest('hex') : null,
+      zip: zip ? `photography/${slug}/${zip}` : null,
       photos: thumbs.map((file) => ({
         name: file,
-        thumb: `gallery/${slug}/thumbs/${file}`,
+        thumb: `photography/${slug}/thumbs/${file}`,
         // A file of the same name next to thumbs/ is treated as the full-size original.
-        full: entries.includes(file) ? `gallery/${slug}/${file}` : null,
+        full: entries.includes(file) ? `photography/${slug}/${file}` : null,
       })),
     }
   }
@@ -73,7 +90,7 @@ export default function galleries() {
     name: 'galleries',
 
     configResolved(config) {
-      galleryRoot = resolve(config.root, 'public/gallery')
+      galleryRoot = resolve(config.root, 'public/photography')
       outDir = resolve(config.root, config.build.outDir)
     },
 
@@ -95,9 +112,22 @@ export default function galleries() {
       if (!existsSync(indexHtml)) return
 
       for (const slug of Object.values(scanGalleries(galleryRoot)).map((g) => g.slug)) {
-        const dir = join(outDir, 'gallery', slug)
+        const dir = join(outDir, 'photography', slug)
         mkdirSync(dir, { recursive: true })
         copyFileSync(indexHtml, join(dir, 'index.html'))
+
+        // publicDir copies meta.json verbatim, which would publish the plain-text
+        // password. Rewrite the copy in dist/ without it.
+        const metaOut = join(dir, 'meta.json')
+        if (!existsSync(metaOut)) continue
+        try {
+          const meta = JSON.parse(readFileSync(metaOut, 'utf8'))
+          if (!('password' in meta)) continue
+          delete meta.password
+          writeFileSync(metaOut, JSON.stringify(meta, null, 2) + '\n')
+        } catch {
+          // Malformed meta.json was already warned about during the scan.
+        }
       }
     },
 

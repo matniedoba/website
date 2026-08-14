@@ -11,10 +11,25 @@ const MIN_ZOOM = 1.08
 // Falls back to the thumbnail when no full-size original sits next to thumbs/.
 const fullSrc = (photo) => BASE + (photo.full ?? photo.thumb)
 
+const unlockKey = (slug) => `photography-unlocked:${slug}`
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 export default function Gallery() {
   const { galleryName = '' } = useParams()
   const gallery = galleries[galleryName.toLowerCase()]
   const [active, setActive] = useState(null)
+
+  // Locked until proven otherwise, so photos never render behind the prompt.
+  const [unlocked, setUnlocked] = useState(() => {
+    if (!gallery?.passwordHash) return true
+    return sessionStorage.getItem(unlockKey(gallery.slug)) === gallery.passwordHash
+  })
 
   usePageTitle(gallery ? gallery.title : 'Gallery not found')
 
@@ -29,6 +44,18 @@ export default function Gallery() {
           </p>
         </div>
       </div>
+    )
+  }
+
+  if (!unlocked) {
+    return (
+      <PasswordPrompt
+        gallery={gallery}
+        onUnlock={() => {
+          sessionStorage.setItem(unlockKey(gallery.slug), gallery.passwordHash)
+          setUnlocked(true)
+        }}
+      />
     )
   }
 
@@ -52,11 +79,60 @@ export default function Gallery() {
         </div>
       ) : (
         <p className="gallery-empty">
-          No photos yet — drop images into <code>public/gallery/{gallery.slug}/thumbs/</code>.
+          No photos yet — drop images into <code>public/photography/{gallery.slug}/thumbs/</code>.
         </p>
       )}
 
       {active && <Lightbox photo={active} onClose={() => setActive(null)} />}
+    </div>
+  )
+}
+
+function PasswordPrompt({ gallery, onUnlock }) {
+  const [value, setValue] = useState('')
+  const [error, setError] = useState(false)
+  const [checking, setChecking] = useState(false)
+
+  const submit = async (event) => {
+    event.preventDefault()
+    if (checking) return
+    setChecking(true)
+    const matches = (await sha256Hex(value)) === gallery.passwordHash
+    setChecking(false)
+    if (matches) {
+      onUnlock()
+    } else {
+      setError(true)
+      setValue('')
+    }
+  }
+
+  return (
+    <div className="password-overlay">
+      <form className="password-dialog" onSubmit={submit}>
+        <h2>{gallery.title}</h2>
+        <p>This gallery is password protected.</p>
+        <input
+          type="password"
+          autoFocus
+          value={value}
+          placeholder="Password"
+          aria-label="Password"
+          aria-invalid={error}
+          onChange={(event) => {
+            setValue(event.target.value)
+            setError(false)
+          }}
+        />
+        {error && (
+          <p className="password-error" role="alert">
+            That password is not right.
+          </p>
+        )}
+        <button className="download-button" type="submit" disabled={!value || checking}>
+          {checking ? 'Checking…' : 'View gallery'}
+        </button>
+      </form>
     </div>
   )
 }

@@ -11,7 +11,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<About />} />
         <Route path="projects" element={<Projects />} />
-        <Route path="gallery/:galleryName" element={<Gallery />} />
+        <Route path="photography/:galleryName" element={<Gallery />} />
         {/* Add further subpages here, e.g.:
             <Route path="work/anchorpoint" element={<Anchorpoint />} /> */}
         <Route path="*" element={<NotFound />} />

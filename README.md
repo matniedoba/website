@@ -46,18 +46,18 @@ and `public/.nojekyll` stops Jekyll from dropping files.
 
 ## Adding a gallery
 
-Galleries live at `matniedoba.de/gallery/<name>` and are managed purely by dropping files
-into `public/gallery/<name>/`:
+Galleries live at `matniedoba.de/photography/<name>` and are managed purely by dropping
+files into `public/photography/<name>/`:
 
 ```
-public/gallery/myGalleryName/
+public/photography/myGalleryName/
   thumbs/            images shown in the grid  ← required
     01-wide.jpg
     02-portrait.jpg
   01-wide.jpg        optional full-size original; clicking the thumb opens it
   02-portrait.jpg
   photos.zip         optional — any .zip here becomes the download button
-  meta.json          optional — { "title": "...", "text": "..." }
+  meta.json          optional — { "title": "...", "text": "...", "password": "..." }
 ```
 
 No code changes and no list to maintain. `vite-plugins/galleries.js` scans the folders at
@@ -65,9 +65,46 @@ build time and exposes them to the page as the `virtual:galleries` module — ne
 because GitHub Pages cannot list a directory at runtime. The dev server re-scans and
 reloads when you add or remove files.
 
-The URL is matched case-insensitively, so `/gallery/mygalleryname` and
-`/gallery/myGalleryName` both work. Without a `meta.json`, the folder name is used as the
-title and no intro text is shown.
+The URL is matched case-insensitively, so `/photography/mygalleryname` and
+`/photography/myGalleryName` both work — but only the exact folder name returns a 200
+status, since GitHub's filesystem is case-sensitive. Share links using the exact name.
+Without a `meta.json`, the folder name is used as the title and no intro text is shown.
+
+### Password protecting a gallery
+
+Add a `password` to the gallery's `meta.json`:
+
+```json
+{ "title": "Natalie und Christian", "password": "some-password" }
+```
+
+Visiting the URL then shows a prompt before anything else renders; no thumbnail is even
+requested until it is unlocked. The unlock lasts for the browser session.
+
+Write it in plain text — it is **not** published. The build hashes it with SHA-256, ships
+only the hash, and strips the field from the copy of `meta.json` in `dist/`. That matters
+because this repo is public.
+
+**It gates the page, not the files.** `/photography/<name>/thumbs/01.jpg` stays directly
+fetchable by anyone who knows the URL, and the hash is brute-forcible for a weak password.
+Treat it as a doormat, not a lock — it stops casual visitors and nothing more. For real
+access control you need a host that can authenticate requests (Cloudflare Access in front
+of the site, for instance); GitHub Pages cannot.
+
+### Keeping a gallery out of search results
+
+`public/robots.txt` disallows `/photography/` for search engines and for the known AI
+crawlers, model trainers and scrapers.
+
+**This is advisory only.** robots.txt is a request, not a control. Compliant crawlers
+honour it; hostile scrapers ignore it entirely, and GitHub Pages has no way to
+authenticate, rate-limit, or block by user agent. Anyone with the URL can fetch the
+photos. What actually keeps a gallery private:
+
+- Use an unguessable folder name (`natalie-und-christian-a7f3c9b2`), since nothing links
+  to it and it cannot be discovered by crawling
+- Never link to a gallery from a public page
+- If real privacy is required, static hosting is the wrong tool — that needs auth
 
 ## Adding a subpage
 
